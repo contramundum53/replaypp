@@ -8,9 +8,9 @@ namespace replaypp{
  * This is used for ensuring that the lock/unlock events are in the right order.
  * @tparam replay The replay object used for recording.
  */
-template<auto& replay>
+template<auto& replay, class mutex = std::mutex>
 struct recording_mutex{
-    std::mutex mtx;
+    mutex mtx;
     static void mutex_lock(){
         replay.wrap("recording_mutex::lock", []{});
     }
