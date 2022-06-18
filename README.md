@@ -21,6 +21,7 @@ In this example, we use `cereal` for serialization. Please install `cereal` to r
 
 #include <replay++/replay++.hpp>
 #include <replay++/integration/cereal_storage.hpp>
+#include <cereal/archives/binary.hpp>
 
 replaypp::replay replay;
 
