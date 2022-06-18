@@ -1,4 +1,5 @@
 #include <replay++/replay++.hpp>
+#include <replay++/integration/cereal_storage.hpp>
 
 #include <random>
 #include <queue>
@@ -6,29 +7,14 @@
 #include <cstdio>
 #include <cassert>
 
-struct mock_storage{
-    std::queue<std::uint32_t>* m_data;
-    template<class T>
-    void put(const T& t){
-        static_assert(std::is_convertible_v<T, std::uint32_t>);
-        m_data->push(std::uint32_t(t));
-    }
-    template<class T>
-    std::optional<T> get(){
-        static_assert(std::is_convertible_v<std::uint32_t, T>);
-        if(m_data->empty()){
-            return std::nullopt;
-        }
-        auto ret = m_data->front();
-        m_data->pop();
-        return T(ret);
-    }
-};
+#include <cereal/cereal.hpp>
+#include <cereal/archives/binary.hpp>
+#include <sstream>
 
+std::stringstream ss;
 
-
-
-replaypp::replay<mock_storage> replay;
+replaypp::replay<replaypp::cereal_writable_storage<cereal::BinaryOutputArchive>, 
+                replaypp::cereal_readable_storage<cereal::BinaryInputArchive>> replay;
 
 replaypp::recording_mutex<replay> mtx;
 std::vector<std::int32_t> outputs;
@@ -98,16 +84,20 @@ void start(){
 int main(){
 
     std::queue<std::uint32_t> m_data;
-    replay = std::move(replaypp::replay{replaypp::record_mode{mock_storage{&m_data}}});
+    replay = {replaypp::record_mode{
+        replaypp::cereal_writable_storage{
+            std::make_unique<cereal::BinaryOutputArchive>(ss)}
+    }};
     std::printf("===== start =====\n");
     outputs.clear();
     start();
 
     auto outputs1 = outputs;
 
-    replay = {replaypp::replay_mode{mock_storage{&m_data}, [&]{
-        assert(false);
-    }}};
+    replay = {replaypp::replay_mode{
+        replaypp::cereal_readable_storage{
+            std::make_unique<cereal::BinaryInputArchive>(ss)}
+    }};
     std::printf("===== start2 =====\n");
     outputs.clear();
     start();
