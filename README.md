@@ -15,9 +15,12 @@ target_link_library(your_target replay++)
 
 ## Example
 
+In this example, we use `cereal` for serialization. Please install `cereal` to run this code.
+
 ```cpp
 
 #include <replay++/replay++.hpp>
+#include <replay++/integration/cereal_storage.hpp>
 
 replaypp::replay replay;
 
@@ -41,13 +44,17 @@ void start(){
 
 // Record the function calls.
 replay = {replaypp::record_mode{
-    replaypp::output_file_storage{"replay.bin"}}}; 
+        replaypp::cereal_writable_storage{
+            std::make_unique<cereal::BinaryOutputArchive>(ss)}
+    }};
 
 start();
 
 // Now, replay the function calls. The results should be exactly the same.
 replay = {replaypp::replay_mode{
-    replaypp::input_file_storage{"replay.bin"}}}; 
+        replaypp::cereal_readable_storage{
+            std::make_unique<cereal::BinaryInputArchive>(ss)}
+    }};
 
 start();
 
